@@ -81,6 +81,8 @@ func TestCollectAndResolvePartial(t *testing.T) {
 	ch <- i1
 	ch <- i2
 	i1.In <- 3
+	recv := (<-out).In
+
 	select {
 	case ch <- i3:
 		t.Error("Expected channel to be full")
@@ -88,7 +90,6 @@ func TestCollectAndResolvePartial(t *testing.T) {
 
 	}
 
-	recv := (<-out).In
 	if recv != 3 {
 		t.Error("Expected to receive 3, got", recv)
 	}
@@ -98,5 +99,26 @@ func TestCollectAndResolvePartial(t *testing.T) {
 	if recv != 5 {
 		t.Error("Expected to receive 5, got", recv)
 	}
+}
 
+func TestCombiner(t *testing.T) {
+	combiner := Combiner{
+		CombineFunc: func(i []In) Out {
+			return 43
+		},
+		Input: make(chan Item),
+	}
+
+	go func() { combiner.Process() }()
+
+	a, x := combiner.Announce()
+	b, y := combiner.Announce()
+	c, z := combiner.Announce()
+
+	a <- 1
+	b <- 2
+	c <- 3
+	if <-x != 43 || <-y != 43 || <-z != 43 {
+		t.Error("Expected to receive 43")
+	}
 }
