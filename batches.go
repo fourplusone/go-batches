@@ -19,7 +19,7 @@ type resolvedItem struct {
 
 // Combiner consolidates tasks
 type Combiner struct {
-	CombineFunc func() Out
+	CombineFunc func(inputs []In) Out
 	channels    (chan Item)
 }
 
@@ -53,23 +53,28 @@ func (c *Combiner) Close() {
 	close(c.channels)
 }
 
+// Process must be called once and will start immideatly processing incoming
+// Items using the "CombineFunc".
 func (c *Combiner) Process() {
 	for {
 
 		var items []resolvedItem
+		var inputs []In
+
 		// Collect all announced Items until the first one has fired
 		resolved := collectAndResolve(c.channels)
 
 		// Wait for all items to be collected
 		for item := range resolved {
 			items = append(items, item)
+			inputs = append(inputs, item.In)
 		}
 
 		if len(items) == 0 {
 			return
 		}
 
-		result := c.CombineFunc()
+		result := c.CombineFunc(inputs)
 
 		for _, item := range items {
 			go func(i resolvedItem) { i.Out <- result }(item)
