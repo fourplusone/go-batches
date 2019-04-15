@@ -1,8 +1,15 @@
+// Package batches consolidates items into batches and processes them.
+// Usually, the creation of items is considered to be fast compared to the
+// final processing (like for example creating git commits vs. pushing them to
+// a repository.
 package batches
 
 import "sync"
 
+// In is the Input Type of an Item
 type In interface{}
+
+// Out is the Output Type of the Combine Function
 type Out interface{}
 
 // An Item to be processed
