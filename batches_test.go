@@ -122,3 +122,25 @@ func TestCombiner(t *testing.T) {
 		t.Error("Expected to receive 43")
 	}
 }
+
+func TestCancel(t *testing.T) {
+	combiner := Combiner{
+		CombineFunc: func(i []In) Out {
+			return 43
+		},
+		Input: make(chan Item),
+	}
+
+	go func() { combiner.Process() }()
+
+	a, x := combiner.Announce()
+	b, _ := combiner.Announce()
+	c, z := combiner.Announce()
+
+	a <- 1
+	close(b)
+	c <- 3
+	if <-x != 43 || <-z != 43 {
+		t.Error("Expected to receive 43")
+	}
+}
